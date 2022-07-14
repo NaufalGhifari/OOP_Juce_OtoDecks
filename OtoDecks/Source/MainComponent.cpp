@@ -23,8 +23,11 @@ MainComponent::MainComponent()
     // add and make visible "playButton" (step 1)
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);
+    
     addAndMakeVisible(volSlider);
     addAndMakeVisible(speedSlider);
+    addAndMakeVisible(posSlider);
+    
     addAndMakeVisible(loadButton);
 
     // add a listener (step 2)
@@ -34,8 +37,10 @@ MainComponent::MainComponent()
 
     volSlider.addListener(this);
     speedSlider.addListener(this);
+    posSlider.addListener(this);
 
     volSlider.setRange(0.0, 1.0);
+    posSlider.setRange(0.0, 1.0);
 }
 
 MainComponent::~MainComponent()
@@ -47,22 +52,12 @@ MainComponent::~MainComponent()
 //==============================================================================
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
-    phase = 0.0;
-    dphase = 0.0001;
-
-    // read an audio file
-    formatManager.registerBasicFormats();
-    
-    
-
-    transportSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
-    resampleSource.prepareToPlay(samplesPerBlockExpected, sampleRate);
+    player1.prepareToPlay(samplesPerBlockExpected, sampleRate);
 }
 
 void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
 {
-    //transportSource.getNextAudioBlock(bufferToFill);
-    resampleSource.getNextAudioBlock(bufferToFill);
+    player1.getNextAudioBlock(bufferToFill);
 }
 
 /*void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo& bufferToFill)
@@ -92,7 +87,8 @@ void MainComponent::releaseResources()
 
     // For more details, see the help for AudioProcessor::releaseResources()
 
-    transportSource.releaseResources();
+    //transportSource.releaseResources();
+    player1.releaseResources();
 }
 
 //==============================================================================
@@ -103,8 +99,6 @@ void MainComponent::paint (juce::Graphics& g)
 
     // You can add your drawing code here!
     
-    /*g.setFont(20.0f);
-    g.drawText("Hello from Perth!", getLocalBounds(), Justification::centred, true);*/
 }
 
 void MainComponent::resized()
@@ -116,15 +110,16 @@ void MainComponent::resized()
     // Call the DBG function to print out a message
     DBG("Hello World!");
     
-    double rowH = getHeight() / 5;
+    double rowH = getHeight() / 6;
     // (step 3)
     playButton.setBounds(0, 0, getWidth(), rowH);
     stopButton.setBounds(0, rowH, getWidth(), rowH);
    
     volSlider.setBounds(0, rowH*2, getWidth(), rowH);
     speedSlider.setBounds(0, rowH * 3, getWidth(), rowH);
+    posSlider.setBounds(0, rowH * 4, getWidth(), rowH);
 
-    loadButton.setBounds(0, rowH*4, getWidth(), rowH);
+    loadButton.setBounds(0, rowH*5, getWidth(), rowH);
     
 }
 
@@ -135,13 +130,13 @@ void MainComponent::buttonClicked(Button* button)
     if (button == &playButton)
     {
         DBG("Play button was clicked");
-        transportSource.start();
+        player1.start();
     }
     // stop button clicked
     else if (button == &stopButton)
     {
         DBG("Stop button was clicked");
-        transportSource.stop();
+        player1.stop();
     }
     // load button clicked
     else if (button == &loadButton)
@@ -158,7 +153,7 @@ void MainComponent::buttonClicked(Button* button)
         fChooser.launchAsync(fileChooserFlags, [this](const FileChooser& chooser)
         {
             File chosenFile = chooser.getResult();
-            loadURL(URL{ chosenFile });
+            player1.loadURL(URL{ chosenFile });
         });
     }
     else
@@ -174,13 +169,19 @@ void MainComponent::sliderValueChanged(Slider *slider)
     {
         DBG("vol slider moved: " << slider->getValue());
         
-        transportSource.setGain(slider->getValue());
+        player1.setGain(slider->getValue());
     }
     else if (slider == &speedSlider)
     {
         DBG("speed slider moved: " << slider->getValue());
 
-        resampleSource.setResamplingRatio(slider->getValue());
+        player1.setSpeed(slider->getValue());
+    }
+    else if (slider == &posSlider)
+    {
+        DBG("position slider moved: " << slider->getValue());
+
+        player1.setPositionRelative(slider->getValue());
     }
     else
     {
@@ -188,14 +189,4 @@ void MainComponent::sliderValueChanged(Slider *slider)
     }
 };
 
-void MainComponent::loadURL(URL audioURL)
-{
-    auto* reader = formatManager.createReaderFor(audioURL.createInputStream(false));
-    if (reader != nullptr)
-    {
-        std::unique_ptr<AudioFormatReaderSource> newSource(new AudioFormatReaderSource(reader, true));
-        transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
-        readerSource.reset(newSource.release());
-        
-    }
-};
+
