@@ -12,7 +12,9 @@
 #include "DeckGUI.h"
 
 //==============================================================================
-DeckGUI::DeckGUI(DJAudioPlayer* _player) : player(_player)
+DeckGUI::DeckGUI(DJAudioPlayer* _player, 
+                 AudioFormatManager& formatManagerToUse,
+                 AudioThumbnailCache& cacheToUse) : player(_player), waveformDisplay(formatManagerToUse, cacheToUse)
 {
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
@@ -25,6 +27,8 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player) : player(_player)
     addAndMakeVisible(posSlider);
 
     addAndMakeVisible(loadButton);
+
+    addAndMakeVisible(waveformDisplay);
 
 
     playButton.addListener(this);
@@ -70,7 +74,7 @@ void DeckGUI::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
 
-    double rowH = getHeight() / 6;
+    double rowH = getHeight() / 8;
     // (step 3)
     playButton.setBounds(0, 0, getWidth(), rowH);
     stopButton.setBounds(0, rowH, getWidth(), rowH);
@@ -79,7 +83,11 @@ void DeckGUI::resized()
     speedSlider.setBounds(0, rowH * 3, getWidth(), rowH);
     posSlider.setBounds(0, rowH * 4, getWidth(), rowH);
 
-    loadButton.setBounds(0, rowH * 5, getWidth(), rowH);
+    waveformDisplay.setBounds(0, rowH*5, getWidth(), rowH*2);
+
+    loadButton.setBounds(0, rowH * 7, getWidth(), rowH);
+
+    
 
 }
 
@@ -113,6 +121,8 @@ void DeckGUI::buttonClicked(Button* button)
         {
             File chosenFile = chooser.getResult();
             player->loadURL(URL{ chosenFile });
+            waveformDisplay.loadURL(URL{ chosenFile });
+
         });
     }
     else

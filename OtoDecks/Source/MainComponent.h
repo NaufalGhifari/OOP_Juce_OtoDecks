@@ -31,13 +31,20 @@ private:
     
     juce::FileChooser fChooser{ "Select a file..." };
 
+    // Topic 9 ######################################################
+    AudioFormatManager formatManager;
+    AudioThumbnailCache thumbCache{100};
+    // ##############################################################
+    
+
+
     // Topic 8 ######################################################
 
     DJAudioPlayer player1;
-    DeckGUI deckGUI1{&player1};
+    DeckGUI deckGUI1{&player1, formatManager, thumbCache};
     
     DJAudioPlayer player2;
-    DeckGUI deckGUI2{&player2};
+    DeckGUI deckGUI2{&player2, formatManager, thumbCache };
 
     MixerAudioSource mixerSource;
          

@@ -12,6 +12,7 @@
 
 #include <JuceHeader.h>
 #include "DJAudioPlayer.h"
+#include "WaveformDisplay.h"
 
 //==============================================================================
 /*
@@ -23,7 +24,9 @@ class DeckGUI  : public juce::Component,
 
 {
 public:
-    DeckGUI(DJAudioPlayer* player);
+    DeckGUI(DJAudioPlayer* player,
+            AudioFormatManager& formatManagerToUse, 
+            AudioThumbnailCache& cacheToUse);
     ~DeckGUI() override;
 
     void paint (juce::Graphics&) override;
@@ -49,6 +52,8 @@ private:
     Slider volSlider;
     Slider speedSlider;
     Slider posSlider;
+
+    WaveformDisplay waveformDisplay;
 
     DJAudioPlayer* player;
 
