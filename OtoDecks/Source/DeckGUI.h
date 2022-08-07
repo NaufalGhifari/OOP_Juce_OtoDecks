@@ -20,7 +20,8 @@
 class DeckGUI  : public juce::Component,
                  public Button::Listener,
                  public Slider::Listener,
-                 public FileDragAndDropTarget
+                 public FileDragAndDropTarget,
+                 public Timer
 
 {
 public:
@@ -40,6 +41,8 @@ public:
 
     bool isInterestedInFileDrag(const StringArray &files) override;
     void filesDropped(const StringArray &files, int x, int y) override;
+
+    void timerCallback() override;
 
 private:
 

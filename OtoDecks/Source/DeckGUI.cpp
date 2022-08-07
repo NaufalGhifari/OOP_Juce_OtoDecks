@@ -43,10 +43,15 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
     speedSlider.setRange(0.0, 100.0);
     posSlider.setRange(0.0, 1.0);
 
+    startTimer(500);
+
+
+
 }
 
 DeckGUI::~DeckGUI()
 {
+    stopTimer();
 }
 
 void DeckGUI::paint (juce::Graphics& g)
@@ -173,4 +178,10 @@ void DeckGUI::filesDropped(const StringArray& files, int x, int y)
     {
         player->loadURL(URL{ File{files[0]} });
     }
+};
+
+void DeckGUI::timerCallback()
+{
+    DBG("DeckGUI::timerCallback()");
+    waveformDisplay.setPositionRelative(player->getPositionRelative());
 };
