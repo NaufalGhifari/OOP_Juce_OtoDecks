@@ -23,11 +23,12 @@ PlaylistComponent::PlaylistComponent()
     trackTitles.push_back("track3");
     trackTitles.push_back("track4");
     trackTitles.push_back("track5");
-    
+
     // playlistComponent's columns
-    tableComponent.getHeader().addColumn("Title", 1, 500);
-    tableComponent.getHeader().addColumn("Duration", 2, 200);
-    tableComponent.getHeader().addColumn("Load track", 3, 200);
+    tableComponent.getHeader().addColumn("Title", 1, 300);
+    tableComponent.getHeader().addColumn("Duration", 2, 100);
+    tableComponent.getHeader().addColumn("Player 1", 3, 100);
+    tableComponent.getHeader().addColumn("Player 2", 4, 100);
 
 
     tableComponent.setModel(this);
@@ -116,11 +117,11 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
     bool isRowSelected,
     Component* existingComponentToUpdate)
 {   
-    if (columnId == 2)
+    if (columnId == 3)
     {   
         if (existingComponentToUpdate == nullptr)
         {
-            TextButton* btn = new TextButton{"Play"};
+            TextButton* btn = new TextButton{"Load to P1"};
 
             String id{std::to_string(rowNumber)};
             btn->setComponentID(id);
@@ -128,6 +129,33 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
             btn->addListener(this);
             existingComponentToUpdate = btn;
 
+        }
+    }
+    else if (columnId == 4)
+    {
+        if (existingComponentToUpdate == nullptr)
+        {
+            TextButton* btn = new TextButton{"Load to P2"};
+
+            /*
+                Workaround:
+                to differenciate between P1 and P2 load button: add 100 to the rowNumbers number. 
+                Meaning any id above 100 belongs to P2.
+
+                Limitations:
+                P1 can only have 100 tracks while P2 can have an indefinite amount.
+                To increase the limit for P1, simply increase the treshold.
+                for the purpose of this project, 100 is sufficient.
+            */
+
+            const int treshold = 100;
+
+            // ERROR: vector subscript out of range
+            String id{ std::to_string(rowNumber + treshold) };
+            btn->setComponentID(id);
+
+            btn->addListener(this);
+            existingComponentToUpdate = btn;
         }
     }
 
@@ -138,5 +166,18 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
 void PlaylistComponent::buttonClicked(Button* button)
 {
     int id = std::stoi(button->getComponentID().toStdString());
-    DBG("PlaylistComponent::buttonClicked : " +  trackTitles[id]);
+    
+    DBG("PlaylistComponent::buttonClicked : " + trackTitles[id]);
+    DBG(id);
+
+    /* any button with id of less or equal to 100 is for P1 */
+    if (id <= 100) // load to P1
+    {
+        
+    }
+    else // load to P2
+    {
+        
+    }
+
 };

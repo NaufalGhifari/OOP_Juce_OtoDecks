@@ -26,6 +26,19 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
     addAndMakeVisible(speedSlider);
     addAndMakeVisible(posSlider);
 
+    // add labels for slider
+    addAndMakeVisible(volLabel);
+    volLabel.setText("Volume", juce::dontSendNotification);
+    volLabel.attachToComponent(&volSlider, true);
+
+    addAndMakeVisible(speedLabel);
+    speedLabel.setText("Speed", juce::dontSendNotification);
+    speedLabel.attachToComponent(&speedSlider, true);
+
+    addAndMakeVisible(posLabel);
+    posLabel.setText("Volume", juce::dontSendNotification);
+    posLabel.attachToComponent(&posSlider, true);
+
     addAndMakeVisible(loadButton);
 
     addAndMakeVisible(waveformDisplay);
@@ -79,21 +92,20 @@ void DeckGUI::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
 
-    double rowH = getHeight() / 8;
+    double rowH = getHeight() / 11;
     // (step 3)
     playButton.setBounds(0, 0, getWidth(), rowH);
     stopButton.setBounds(0, rowH, getWidth(), rowH);
 
-    volSlider.setBounds(0, rowH * 2, getWidth(), rowH);
-    speedSlider.setBounds(0, rowH * 3, getWidth(), rowH);
-    posSlider.setBounds(0, rowH * 4, getWidth(), rowH);
+    //sliders and label position
+    auto margin = 50; // margin to make space between left and right edges
+    volSlider.setBounds(margin, rowH * 2, getWidth() - margin, rowH);
+    speedSlider.setBounds(margin, rowH * 3, getWidth() - margin, rowH);
+    posSlider.setBounds(margin, rowH * 4, getWidth() - margin, rowH);
 
-    waveformDisplay.setBounds(0, rowH*5, getWidth(), rowH*2);
+    waveformDisplay.setBounds(0, rowH * 8, getWidth(), rowH*2);
 
-    loadButton.setBounds(0, rowH * 7, getWidth(), rowH);
-
-    
-
+    loadButton.setBounds(0, rowH * 10, getWidth(), rowH);
 }
 
 void DeckGUI::buttonClicked(Button* button)

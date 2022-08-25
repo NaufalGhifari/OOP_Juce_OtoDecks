@@ -56,6 +56,10 @@ private:
     Slider speedSlider;
     Slider posSlider;
 
+    Label volLabel;
+    Label speedLabel;
+    Label posLabel;
+
     WaveformDisplay waveformDisplay;
 
     DJAudioPlayer* player;
