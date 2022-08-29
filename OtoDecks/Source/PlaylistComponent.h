@@ -109,5 +109,5 @@ private:
 
         3. Make a function that takes said vector and writes to a file (XML or CSV) [DONE]
 
-        4. Make a function that loads from this XML/CSV file into the playlistComponent []
+        4. Make a function that loads from this XML/CSV file into the playlistComponent [DONE]
     */

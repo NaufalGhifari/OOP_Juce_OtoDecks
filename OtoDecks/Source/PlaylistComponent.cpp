@@ -57,6 +57,8 @@ PlaylistComponent::~PlaylistComponent()
     tableComponent.setModel(nullptr);
 
     // save playlist to a file
+     
+    // <!> uncomment to save the file upon closing
     saveToFile(fileVector, "playlist.csv");
 }
 
@@ -308,9 +310,18 @@ void PlaylistComponent::loadPlaylistFromFile(std::string fileName)
     //<!> load playlist
     std::vector<std::string> lineToken;
     std::string line;
+
+    // get the header line
+    std::string headerLine;
+    getline(saveFile, headerLine);
+    DBG("Header line: " << headerLine);
+
+
     while (getline(saveFile, line))
     {
         lineToken = tokenise(line, ',');
+
+        DBG(lineToken[0] << lineToken[1]);
 
         // WIP: we can fetch files and titles in here. Load the files to the playlist
         File currentFile(lineToken[1]);
@@ -350,21 +361,13 @@ std::vector<std::string> PlaylistComponent::tokenise(std::string csvLine, char s
 
 
 
-/*
-Issue: playlistComponent cannot access DeckGUI's "player" attribute
-Idea:
 
-*/
 
 /*
-    saveToFile() pseudocode
-    {
-        
-        open file;
+    issues:
+    1. Cannot open playlist.csv because of relative path
+    2. absolute path contains "/" which breaks the path by escaping the next letter
 
-        write header line;
+    FIXED by taking out the header first
 
-
-
-    };
 */
