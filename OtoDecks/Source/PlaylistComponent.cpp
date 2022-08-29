@@ -302,12 +302,10 @@ void PlaylistComponent::saveToFile(std::vector<juce::File> vector, std::string f
 
 void PlaylistComponent::loadPlaylistFromFile(std::string fileName)
 {
-    
     // create a file stream & open the save file
     std::ifstream saveFile;
     saveFile.open(fileName);
-
-    //<!> load playlist
+    
     std::vector<std::string> lineToken;
     std::string line;
 
@@ -316,20 +314,19 @@ void PlaylistComponent::loadPlaylistFromFile(std::string fileName)
     getline(saveFile, headerLine);
     DBG("Header line: " << headerLine);
 
-
+    // tokenise the file line by line
     while (getline(saveFile, line))
     {
+        // tokenise this line
         lineToken = tokenise(line, ',');
 
         DBG(lineToken[0] << lineToken[1]);
-
-        // WIP: we can fetch files and titles in here. Load the files to the playlist
+        
+        // using the absolute path, find the correct file
         File currentFile(lineToken[1]);
 
         // add the file to the playlist
         fileVector.push_back(currentFile);
-
-
     };
 
     // close the file

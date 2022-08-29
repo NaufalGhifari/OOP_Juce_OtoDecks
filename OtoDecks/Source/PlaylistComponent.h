@@ -75,12 +75,8 @@ public:
     */ 
     void loadPlaylistFromFile(std::string fileName);
 
-
-    /*##################################################################################################*/
-
+    /* Takes a line and return a vector of tokens (strings) */
     static std::vector<std::string> tokenise(std::string csvLine, char separator);
-
-    /*##################################################################################################*/
 
 private:
     TableListBox tableComponent;
