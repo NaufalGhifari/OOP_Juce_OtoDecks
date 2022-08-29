@@ -44,6 +44,13 @@ public:
 
     void timerCallback() override;
 
+    /**/
+    DJAudioPlayer* getPlayer();
+
+    WaveformDisplay* getWaveformDisplay();
+    /**/
+    
+
 private:
 
     juce::FileChooser fChooser{ "Select a file..." };
@@ -51,6 +58,7 @@ private:
     TextButton playButton{ "PLAY" };
     TextButton stopButton{ "STOP" };
     TextButton loadButton{ "LOAD" };
+    
 
     Slider volSlider;
     Slider speedSlider;

@@ -10,36 +10,54 @@
 
 #include <JuceHeader.h>
 #include "PlaylistComponent.h"
+#include "DJAudioPlayer.h"
 
 //==============================================================================
-PlaylistComponent::PlaylistComponent()
+PlaylistComponent::PlaylistComponent(DeckGUI* _deck_1, 
+                                    DeckGUI* _deck_2) : deckOne(_deck_1), deckTwo(_deck_2)
 {
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
 
+    //deckOne = _deck_1;
+    //deckTwo = _deck_2;
+
     // add things to trackTitles
+    /*
     trackTitles.push_back("track1");
     trackTitles.push_back("track2");
     trackTitles.push_back("track3");
     trackTitles.push_back("track4");
     trackTitles.push_back("track5");
+    */
+
+    // load playlist from a file
+    loadPlaylistFromFile("playlist.csv");
 
     // playlistComponent's columns
     tableComponent.getHeader().addColumn("Title", 1, 300);
     tableComponent.getHeader().addColumn("Duration", 2, 100);
     tableComponent.getHeader().addColumn("Player 1", 3, 100);
     tableComponent.getHeader().addColumn("Player 2", 4, 100);
+    tableComponent.getHeader().addColumn("Remove", 5, 100);
 
 
     tableComponent.setModel(this);
 
     // make playlistComponent visible
     addAndMakeVisible(tableComponent);
+
+    // display and add listener for addNewFileButton
+    addAndMakeVisible(addNewFileButton);
+    addNewFileButton.addListener(this);
 }
 
 PlaylistComponent::~PlaylistComponent()
 {
     tableComponent.setModel(nullptr);
+
+    // save playlist to a file
+    saveToFile(fileVector, "playlist.csv");
 }
 
 void PlaylistComponent::paint (juce::Graphics& g)
@@ -67,12 +85,19 @@ void PlaylistComponent::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
 
+    double rowH = getHeight()/10;
+
+    
     tableComponent.setBounds(0, 0, getWidth(), getHeight());
+
+    // position load new file button
+    addNewFileButton.setBounds(0, rowH*9, getWidth(), rowH);
 }
 
 int PlaylistComponent::getNumRows()
 {
-    return trackTitles.size();
+    //return trackTitles.size();
+    return fileVector.size();
 };
 
 // 4 functions inherited from TableListBoxModel
@@ -103,12 +128,26 @@ void PlaylistComponent::paintCell(Graphics& g,
 
     /* fix for crash on fullscreen. Source: https://world-class.github.io/REPL/kinks/level-5/cm-2005-object-oriented-programming/ */
     if (rowNumber < getNumRows())
-    {
+    {   
+        
+        if (fileVector.size() > 0)
+        {
+            g.drawText(fileVector[rowNumber].getFileName(),
+                2, 0,
+                width - 4, height,
+                Justification::centredLeft,
+                true);
+        }
+        
+
+
+        /*
         g.drawText(trackTitles[rowNumber],
             2, 0,
             width - 4, height,
             Justification::centredLeft,
             true);
+        */
     }
 };
 
@@ -150,13 +189,22 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
 
             const int treshold = 100;
 
-            // ERROR: vector subscript out of range
             String id{ std::to_string(rowNumber + treshold) };
             btn->setComponentID(id);
 
             btn->addListener(this);
             existingComponentToUpdate = btn;
         }
+    }
+    else if (columnId == 5)
+    {
+        TextButton* btn = new TextButton{ "Remove" };
+        
+        String id{"deleteButton"};
+        btn->setComponentID(id);
+
+        btn->addListener(this);
+        existingComponentToUpdate = btn;
     }
 
     return existingComponentToUpdate;
@@ -165,19 +213,158 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
 // inherited from Button:Listener
 void PlaylistComponent::buttonClicked(Button* button)
 {
-    int id = std::stoi(button->getComponentID().toStdString());
     
-    DBG("PlaylistComponent::buttonClicked : " + trackTitles[id]);
-    DBG(id);
-
-    /* any button with id of less or equal to 100 is for P1 */
-    if (id <= 100) // load to P1
+    if (button->getComponentID().toStdString() == "") // button does not have an id
     {
-        
-    }
-    else // load to P2
-    {
-        
-    }
+        if (button == &addNewFileButton)
+        {
+            DBG("load new file button was clicked");
+            
+            // choose a file
+            auto fileChooserFlags = FileBrowserComponent::canSelectFiles;
+            fChooser.launchAsync(fileChooserFlags, [this](const FileChooser& chooser)
+                {
+                    File chosenFile = chooser.getResult();
 
+                    // add the selected file(s) to fileVector
+                    fileVector.push_back(chosenFile);
+
+                    for (int i = 0; i < fileVector.size(); ++i)
+                    {
+                        DBG(i + 1 << ". File name: " << fileVector[i].getFileName());
+                    }
+
+                });
+        }
+    }
+    else // button has an id
+    { 
+        String id_string = button->getComponentID().toStdString();
+        
+        if (id_string == "deleteButton")
+        {
+            DBG(id_string << " clicked");
+
+            /*
+                <!> 
+                issue:
+                delete button has no id, not an int at least. so cannot find the relevant track to delete.
+
+                idea: 
+                instead of using deleteButton as string, use button.getText() or something
+            */
+
+            return;
+        }
+
+        int id_int = std::stoi(button->getComponentID().toStdString());
+
+        if (id_int < 100) // load to P1 
+        {
+            // <!> Error: ListBox::checkModelPtrIsValid() pointer hit despite destruction
+            DBG("Load to P1: " << fileVector[id_int].getFileName());
+            
+            // load track and draw waveform
+            // similar to loading a track straight to the deck
+            deckOne->getPlayer()->loadURL(URL{fileVector[id_int]});
+            deckOne->getWaveformDisplay()->loadURL(URL{ fileVector[id_int] });
+        }
+        else // load to P2
+        {
+            DBG("Load to P2: " << fileVector[id_int - 100].getFileName());
+
+            deckTwo->getPlayer()->loadURL(URL{ fileVector[id_int - 100] });
+            deckTwo->getWaveformDisplay()->loadURL(URL{ fileVector[id_int - 100] });
+        }
+    }
 };
+
+void PlaylistComponent::saveToFile(std::vector<juce::File> vector, std::string fileName)
+{
+    // create a file stream & open the save file
+    std::ofstream saveFile;
+    saveFile.open(fileName);
+
+    // write header
+    saveFile << "title,absolute_path" << std::endl;
+
+    // write content
+    for (int i = 0; i < vector.size(); ++i)
+    {
+        saveFile << vector[i].getFileNameWithoutExtension() << "," << vector[i].getFullPathName() << std::endl;
+    }
+    
+    // close the file
+    saveFile.close();
+};
+
+void PlaylistComponent::loadPlaylistFromFile(std::string fileName)
+{
+    
+    // create a file stream & open the save file
+    std::ifstream saveFile;
+    saveFile.open(fileName);
+
+    //<!> load playlist
+    std::vector<std::string> lineToken;
+    std::string line;
+    while (getline(saveFile, line))
+    {
+        lineToken = tokenise(line, ',');
+
+        // WIP: we can fetch files and titles in here. Load the files to the playlist
+        File currentFile(lineToken[1]);
+
+        // add the file to the playlist
+        fileVector.push_back(currentFile);
+
+
+    };
+
+    // close the file
+    saveFile.close();
+    
+};
+
+/*##################################################################################################*/
+
+std::vector<std::string> PlaylistComponent::tokenise(std::string csvLine, char separator)
+{
+    std::vector<std::string> tokens;
+    signed int start, end;
+    std::string token;
+    start = csvLine.find_first_not_of(separator, 0);
+    do {
+        end = csvLine.find_first_of(separator, start);
+        if (start == csvLine.length() || start == end) break;
+        if (end >= 0) token = csvLine.substr(start, end - start);
+        else token = csvLine.substr(start, csvLine.length() - start);
+        tokens.push_back(token);
+        start = end + 1;
+    } while (end > 0);
+
+    return tokens;
+}
+/*##################################################################################################*/
+
+
+
+
+/*
+Issue: playlistComponent cannot access DeckGUI's "player" attribute
+Idea:
+
+*/
+
+/*
+    saveToFile() pseudocode
+    {
+        
+        open file;
+
+        write header line;
+
+
+
+    };
+*/

@@ -19,9 +19,14 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
 
+    // ### Add and make visible to display the items ###
+
+    // buttons
     addAndMakeVisible(playButton);
     addAndMakeVisible(stopButton);
+    addAndMakeVisible(loadButton);
 
+    // sliders
     addAndMakeVisible(volSlider);
     addAndMakeVisible(speedSlider);
     addAndMakeVisible(posSlider);
@@ -36,13 +41,12 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
     speedLabel.attachToComponent(&speedSlider, true);
 
     addAndMakeVisible(posLabel);
-    posLabel.setText("Volume", juce::dontSendNotification);
+    posLabel.setText("Position", juce::dontSendNotification);
     posLabel.attachToComponent(&posSlider, true);
-
-    addAndMakeVisible(loadButton);
 
     addAndMakeVisible(waveformDisplay);
 
+    // ### Add listeners to react to clicks ###
 
     playButton.addListener(this);
     stopButton.addListener(this);
@@ -57,9 +61,6 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
     posSlider.setRange(0.0, 1.0);
 
     startTimer(500);
-
-
-
 }
 
 DeckGUI::~DeckGUI()
@@ -76,16 +77,19 @@ void DeckGUI::paint (juce::Graphics& g)
        drawing code..
     */
 
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
+    /*g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));*/   // clear the background
+    g.fillAll(juce::Colours::black);
 
-    g.setColour (juce::Colours::grey);
+    g.setColour (juce::Colours::darkgrey);
     g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
+    // draw some placeholder text
+    /*
     g.setColour (juce::Colours::white);
     g.setFont (14.0f);
-    g.drawText ("DeckGUI", getLocalBounds(),
-                juce::Justification::centred, true);   // draw some placeholder text
-}
+    g.drawText ("DeckGUI", getLocalBounds(), juce::Justification::centred, true);   
+    */
+}   
 
 void DeckGUI::resized()
 {
@@ -93,19 +97,22 @@ void DeckGUI::resized()
     // components that your component contains..
 
     double rowH = getHeight() / 11;
+    auto margin = 50; // margin to make space between left and right edges
+
     // (step 3)
     playButton.setBounds(0, 0, getWidth(), rowH);
     stopButton.setBounds(0, rowH, getWidth(), rowH);
+    loadButton.setBounds(0, rowH * 10, getWidth(), rowH);
 
     //sliders and label position
-    auto margin = 50; // margin to make space between left and right edges
+    
     volSlider.setBounds(margin, rowH * 2, getWidth() - margin, rowH);
     speedSlider.setBounds(margin, rowH * 3, getWidth() - margin, rowH);
     posSlider.setBounds(margin, rowH * 4, getWidth() - margin, rowH);
 
     waveformDisplay.setBounds(0, rowH * 8, getWidth(), rowH*2);
 
-    loadButton.setBounds(0, rowH * 10, getWidth(), rowH);
+    
 }
 
 void DeckGUI::buttonClicked(Button* button)
@@ -142,6 +149,7 @@ void DeckGUI::buttonClicked(Button* button)
 
         });
     }
+
     else
     {
         DBG("Unrecognized button clicked");
@@ -196,4 +204,15 @@ void DeckGUI::timerCallback()
 {
     DBG("DeckGUI::timerCallback()");
     waveformDisplay.setPositionRelative(player->getPositionRelative());
+};
+
+//<!> WIP
+DJAudioPlayer* DeckGUI::getPlayer()
+{
+    return player;
+};
+
+WaveformDisplay* DeckGUI::getWaveformDisplay()
+{
+    return &waveformDisplay;
 };

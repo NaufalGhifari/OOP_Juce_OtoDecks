@@ -5,6 +5,8 @@
 #include "DeckGUI.h"
 #include "PlaylistComponent.h"
 
+using namespace juce;
+
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -25,6 +27,9 @@ public:
     //==============================================================================
     void paint (juce::Graphics& g) override;
     void resized() override;
+
+    
+
     
 private:
     //==============================================================================
@@ -50,9 +55,9 @@ private:
     MixerAudioSource mixerSource;
          
     // ##############################################################
-
-    PlaylistComponent playlistComponent;
-
+    
+    //<!> 'playlistComponent': unknown override specifier
+    PlaylistComponent playlistComponent{ &deckGUI1, &deckGUI2 };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
