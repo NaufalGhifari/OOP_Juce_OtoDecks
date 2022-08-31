@@ -31,17 +31,26 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
     addAndMakeVisible(speedSlider);
     addAndMakeVisible(posSlider);
 
-    // add labels for slider
-    addAndMakeVisible(volLabel);
-    volLabel.setText("Volume", juce::dontSendNotification);
-    volLabel.attachToComponent(&volSlider, true);
+    // change the design
+    // source: https://www.youtube.com/watch?v=po46y8UKPOY
+    volSlider.setSliderStyle(Slider::SliderStyle::Rotary);
+    volSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
 
-    addAndMakeVisible(speedLabel);
-    speedLabel.setText("Speed", juce::dontSendNotification);
-    speedLabel.attachToComponent(&speedSlider, true);
+    speedSlider.setSliderStyle(Slider::SliderStyle::Rotary);
+    speedSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
+
+
+    // add labels for slider
+    //addAndMakeVisible(volLabel);
+    //volLabel.setText("Volume", juce::dontSendNotification);
+    //volLabel.attachToComponent(&volSlider, true);
+
+    //addAndMakeVisible(speedLabel);
+    //speedLabel.setText("Speed", juce::dontSendNotification);
+    //speedLabel.attachToComponent(&speedSlider, true);
 
     addAndMakeVisible(posLabel);
-    posLabel.setText("Position", juce::dontSendNotification);
+    posLabel.setText("Playback", juce::dontSendNotification);
     posLabel.attachToComponent(&posSlider, true);
 
     addAndMakeVisible(waveformDisplay);
@@ -70,25 +79,12 @@ DeckGUI::~DeckGUI()
 
 void DeckGUI::paint (juce::Graphics& g)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
-
-       You should replace everything in this method with your own
-       drawing code..
-    */
-
     /*g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));*/   // clear the background
     g.fillAll(juce::Colours::black);
 
     g.setColour (juce::Colours::darkgrey);
     g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
-    // draw some placeholder text
-    /*
-    g.setColour (juce::Colours::white);
-    g.setFont (14.0f);
-    g.drawText ("DeckGUI", getLocalBounds(), juce::Justification::centred, true);   
-    */
 }   
 
 void DeckGUI::resized()
@@ -96,22 +92,36 @@ void DeckGUI::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
 
-    double rowH = getHeight() / 11;
+    double rowH = getHeight() / 14;
     auto margin = 50; // margin to make space between left and right edges
 
     // (step 3)
+    waveformDisplay.setBounds(0, 0, getWidth(), rowH*2);
+    posSlider.setBounds(margin, rowH * 2, getWidth() - margin, rowH*2);
+
+    playButton.setBounds(0, rowH*4, getWidth(), rowH);
+    stopButton.setBounds(0, rowH*5, getWidth(), rowH);
+    
+
+    //sliders position
+    volSlider.setBounds(margin, rowH * 6.5, getWidth()/2, rowH*5);
+    speedSlider.setBounds(getWidth() / 2, rowH * 6.5, getWidth() / 2, rowH * 5);
+    
+
+    loadButton.setBounds(0, rowH * 13, getWidth(), rowH);
+
+    /*
+    waveformDisplay.setBounds(0, rowH * 8, getWidth(), rowH * 2);
+
     playButton.setBounds(0, 0, getWidth(), rowH);
     stopButton.setBounds(0, rowH, getWidth(), rowH);
     loadButton.setBounds(0, rowH * 10, getWidth(), rowH);
 
-    //sliders and label position
-    
+    //sliders position
     volSlider.setBounds(margin, rowH * 2, getWidth() - margin, rowH);
     speedSlider.setBounds(margin, rowH * 3, getWidth() - margin, rowH);
     posSlider.setBounds(margin, rowH * 4, getWidth() - margin, rowH);
-
-    waveformDisplay.setBounds(0, rowH * 8, getWidth(), rowH*2);
-
+    */
     
 }
 
@@ -207,7 +217,7 @@ void DeckGUI::timerCallback()
     waveformDisplay.setPositionRelative(player->getPositionRelative());
 };
 
-//<!> WIP
+// pass private attributes to another class
 DJAudioPlayer* DeckGUI::getPlayer()
 {
     return player;

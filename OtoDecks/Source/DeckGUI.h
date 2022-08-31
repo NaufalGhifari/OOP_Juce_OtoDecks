@@ -56,7 +56,7 @@ private:
     juce::FileChooser fChooser{ "Select a file..." };
 
     TextButton playButton{ "PLAY" };
-    TextButton stopButton{ "STOP" };
+    TextButton stopButton{ "PAUSE" };
     TextButton loadButton{ "LOAD" };
     
 

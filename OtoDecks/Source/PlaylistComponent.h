@@ -21,17 +21,12 @@
 #include "DJAudioPlayer.h"
 #include "WaveformDisplay.h"
 
-
-
 using namespace juce;
 
-
-//==============================================================================
-/*
-*/
 class PlaylistComponent  : public juce::Component,
                             public TableListBoxModel,
-                            public Button::Listener
+                            public Button::Listener,
+                            public TextEditor::Listener
 {
 public:
     PlaylistComponent(DeckGUI* _deck_1, DeckGUI* _deck_2);
@@ -78,6 +73,8 @@ public:
     /* Takes a line and return a vector of tokens (strings) */
     static std::vector<std::string> tokenise(std::string csvLine, char separator);
 
+    double getTracklength(File audioFile);
+
 private:
     TableListBox tableComponent;
     
@@ -87,23 +84,38 @@ private:
     // Button to load new files to the playlist
     TextButton addNewFileButton{ "Add new file" };
 
-    // A vector of juce::File
+    
+    /*
+        There are 2 file vectors: fileVector and displayedFilevector.
+        filevector: holds ALL files added to the playlist.
+        displayedFilevector: holds files that are being displayed to the user
+    */
+
     std::vector <juce::File> fileVector;
+    std::vector <juce::File> displayedFileVector;
+    std::vector <double> trackLenVector;
 
     // pointers to different DeckGUIs
     DeckGUI* deckOne;
     DeckGUI* deckTwo;
 
+    juce::AudioFormatManager playlistCompFormatManager;
+
+    //################
+    Label searchLabel;
+    Label inputText;
+
+    TextButton searchButton{"Search"};
+    TextButton reloadButton{"Reload"};
+    
+    //################
+
+    TextEditor searchTextEditor;
+    
+    //################
+
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PlaylistComponent)
 };
 
-    /*
-        Idea for persistent library:
-        1. Have a vector of files std::vector<Juce::File> [DONE]
-
-        2. Make a function such as addFile() to fetch and serve files [DONE]
-
-        3. Make a function that takes said vector and writes to a file (XML or CSV) [DONE]
-
-        4. Make a function that loads from this XML/CSV file into the playlistComponent [DONE]
-    */
+    

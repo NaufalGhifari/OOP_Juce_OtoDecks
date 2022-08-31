@@ -19,18 +19,6 @@ PlaylistComponent::PlaylistComponent(DeckGUI* _deck_1,
     // In your constructor, you should add any child components, and
     // initialise any special settings that your component needs.
 
-    //deckOne = _deck_1;
-    //deckTwo = _deck_2;
-
-    // add things to trackTitles
-    /*
-    trackTitles.push_back("track1");
-    trackTitles.push_back("track2");
-    trackTitles.push_back("track3");
-    trackTitles.push_back("track4");
-    trackTitles.push_back("track5");
-    */
-
     // load playlist from a file
     loadPlaylistFromFile("playlist.csv");
 
@@ -50,6 +38,55 @@ PlaylistComponent::PlaylistComponent(DeckGUI* _deck_1,
     // display and add listener for addNewFileButton
     addAndMakeVisible(addNewFileButton);
     addNewFileButton.addListener(this);
+
+    playlistCompFormatManager.registerBasicFormats();
+
+    //#################
+    addAndMakeVisible(searchButton);
+    searchButton.addListener(this);
+    searchButton.setName("search");
+
+    addAndMakeVisible(reloadButton);
+    reloadButton.addListener(this);
+    reloadButton.setName("reload");
+
+    addAndMakeVisible(searchLabel);
+    searchLabel.setText("Search tracks: ", juce::dontSendNotification);
+    //searchLabel.attachToComponent(&inputText, true);
+    searchLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    searchLabel.setJustificationType(juce::Justification::centred);
+
+    addAndMakeVisible(inputText);
+    inputText.setEditable(true);
+    inputText.setColour(juce::Label::backgroundColourId, juce::Colours::darkgrey);
+    inputText.onTextChange = [this]
+    { 
+        // <!> update displayedFileVector here
+        /*
+            WIP ACTUAL
+            matching algo works, but repainting the cell is an issue because of the vector index
+        */
+
+        String currentText = inputText.getText();
+        DBG("Text changed: " << currentText);
+
+        displayedFileVector.clear();
+
+        for(int i=0; i < fileVector.size(); ++i)
+        {
+            DBG("Comparing: " << currentText << " to " << fileVector[i].getFileName());
+
+            // if a substring is found, add file to displayedFileVector
+            // source: https://java2blog.com/check-if-string-contains-substring-cpp/
+            if (strstr(fileVector[i].getFileName().toStdString().c_str(), currentText.toStdString().c_str()))
+            {
+                DBG("Match found! " << currentText << " and " << fileVector[i].getFileName());
+                displayedFileVector.push_back(fileVector[i]);
+            }
+        }
+        tableComponent.resized();
+    };
+    //#################
 }
 
 PlaylistComponent::~PlaylistComponent()
@@ -87,13 +124,19 @@ void PlaylistComponent::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
 
-    double rowH = getHeight()/10;
+    double height = getHeight()/10;
+    double width = getWidth()/10;
 
+    searchLabel.setBounds(0, 0, width * 2, height);
+    inputText.setBounds(width*2, 0, getWidth()-width*4, height);
     
-    tableComponent.setBounds(0, 0, getWidth(), getHeight());
+    searchButton.setBounds(width*8, 0, width, height);
+    reloadButton.setBounds(width * 9, 0, width, height);
+
+    tableComponent.setBounds(0, height, getWidth(), getHeight());
 
     // position load new file button
-    addNewFileButton.setBounds(0, rowH*9, getWidth(), rowH);
+    addNewFileButton.setBounds(0, height *9, getWidth(), height);
 }
 
 int PlaylistComponent::getNumRows()
@@ -127,29 +170,50 @@ void PlaylistComponent::paintCell(Graphics& g,
     int height,
     bool rowIsSelected)
 {   
+    //rowNumber = displayedFileVector.size();
 
     /* fix for crash on fullscreen. Source: https://world-class.github.io/REPL/kinks/level-5/cm-2005-object-oriented-programming/ */
     if (rowNumber < getNumRows())
     {   
         
-        if (fileVector.size() > 0)
+        if (displayedFileVector.size() > 0)
         {
-            g.drawText(fileVector[rowNumber].getFileName(),
-                2, 0,
+            if (columnId == 1)
+            {
+                g.drawText(displayedFileVector[rowNumber].getFileName(),
+                    2, 0,
+                    width - 4, height,
+                    Justification::centredLeft,
+                    true);
+            }
+            else if (columnId == 2)
+            {
+                double TL_double = getTracklength(displayedFileVector[rowNumber]);                
+                std::string TL_string = std::to_string(TL_double) + " s";
+                
+                g.drawText(TL_string,
+                    2, 0,
+                    width - 4, height,
+                    Justification::centredLeft,
+                    true);
+            }
+        }
+        else 
+        {
+            g.drawText("no tracks found", 2, 0,
                 width - 4, height,
                 Justification::centredLeft,
                 true);
+            
+            
         }
-        
-
-
-        /*
-        g.drawText(trackTitles[rowNumber],
-            2, 0,
+    }
+    else 
+    {
+        g.drawText("no tracks found", 2, 0,
             width - 4, height,
             Justification::centredLeft,
             true);
-        */
     }
 };
 
@@ -164,8 +228,12 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
         {
             TextButton* btn = new TextButton{"Load to P1"};
 
+            // Aside from IDs, we differenciate different 
+            // buttons by assigning names using setName()
+
             String id{std::to_string(rowNumber)};
             btn->setComponentID(id);
+            btn->setName("loadLeft");
 
             btn->addListener(this);
             existingComponentToUpdate = btn;
@@ -178,21 +246,9 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
         {
             TextButton* btn = new TextButton{"Load to P2"};
 
-            /*
-                Workaround:
-                to differenciate between P1 and P2 load button: add 100 to the rowNumbers number. 
-                Meaning any id above 100 belongs to P2.
-
-                Limitations:
-                P1 can only have 100 tracks while P2 can have an indefinite amount.
-                To increase the limit for P1, simply increase the treshold.
-                for the purpose of this project, 100 is sufficient.
-            */
-
-            const int treshold = 100;
-
-            String id{ std::to_string(rowNumber + treshold) };
+            String id{ std::to_string(rowNumber) };
             btn->setComponentID(id);
+            btn->setName("loadRight");
 
             btn->addListener(this);
             existingComponentToUpdate = btn;
@@ -202,8 +258,9 @@ Component* PlaylistComponent::refreshComponentForCell(int rowNumber,
     {
         TextButton* btn = new TextButton{ "Remove" };
         
-        String id{"deleteButton"};
+        String id{ std::to_string(rowNumber) };
         btn->setComponentID(id);
+        btn->setName("removeButton");
 
         btn->addListener(this);
         existingComponentToUpdate = btn;
@@ -227,41 +284,63 @@ void PlaylistComponent::buttonClicked(Button* button)
             fChooser.launchAsync(fileChooserFlags, [this](const FileChooser& chooser)
                 {
                     File chosenFile = chooser.getResult();
+                    
+                    // <!> check if file is ok
 
                     // add the selected file(s) to fileVector
                     fileVector.push_back(chosenFile);
+                    displayedFileVector.push_back(chosenFile);
+
+                    // get track length
+                    double trackLength = getTracklength(chosenFile);
+                    trackLenVector.push_back(trackLength);
 
                     for (int i = 0; i < fileVector.size(); ++i)
                     {
                         DBG(i + 1 << ". File name: " << fileVector[i].getFileName());
+                        DBG(i + 1 << ". Track length: " << getTracklength(fileVector[i]));
+
                     }
 
+                    // update the table by calling resized()
+                    tableComponent.resized();
                 });
+        }
+        else if (button == &searchButton)
+        {
+            DBG("PlaylistComponent::buttonClicked : search button clicked");
+
+            displayedFileVector.clear();
+            resized();
+
+        }
+        else if (button == &reloadButton)
+        {
+            DBG("PlaylistComponent::buttonClicked : reload button clicked");
+
+            displayedFileVector.clear();
+            fileVector.clear();
+
+            loadPlaylistFromFile("playlist.csv");
+
+            resized();
         }
     }
     else // button has an id
     { 
         String id_string = button->getComponentID().toStdString();
+        String btn_name = button->getName().toStdString();
+        int id_int = std::stoi(button->getComponentID().toStdString());
         
-        if (id_string == "deleteButton")
+        if (btn_name == "removeButton")
         {
-            DBG(id_string << " clicked");
+            DBG(btn_name << " clicked");
 
-            /*
-                <!> 
-                issue:
-                delete button has no id, not an int at least. so cannot find the relevant track to delete.
-
-                idea: 
-                instead of using deleteButton as string, use button.getText() or something
-            */
+            // <!> remove track
 
             return;
-        }
-
-        int id_int = std::stoi(button->getComponentID().toStdString());
-
-        if (id_int < 100) // load to P1 
+        }       
+        else if (btn_name == "loadLeft") // load to P1 
         {
             // <!> Error: ListBox::checkModelPtrIsValid() pointer hit despite destruction
             DBG("Load to P1: " << fileVector[id_int].getFileName());
@@ -271,12 +350,16 @@ void PlaylistComponent::buttonClicked(Button* button)
             deckOne->getPlayer()->loadURL(URL{fileVector[id_int]});
             deckOne->getWaveformDisplay()->loadURL(URL{ fileVector[id_int] });
         }
-        else // load to P2
+        else if (btn_name == "loadRight") // load to P2
         {
-            DBG("Load to P2: " << fileVector[id_int - 100].getFileName());
+            DBG("Load to P2: " << fileVector[id_int].getFileName());
 
-            deckTwo->getPlayer()->loadURL(URL{ fileVector[id_int - 100] });
-            deckTwo->getWaveformDisplay()->loadURL(URL{ fileVector[id_int - 100] });
+            deckTwo->getPlayer()->loadURL(URL{ fileVector[id_int] });
+            deckTwo->getWaveformDisplay()->loadURL(URL{ fileVector[id_int] });
+        }
+        else
+        {
+            DBG("PlaylistComponent::buttonClicked : Unknown button clicked.");
         }
     }
 };
@@ -327,14 +410,12 @@ void PlaylistComponent::loadPlaylistFromFile(std::string fileName)
 
         // add the file to the playlist
         fileVector.push_back(currentFile);
+        displayedFileVector.push_back(currentFile);
     };
 
     // close the file
     saveFile.close();
-    
 };
-
-/*##################################################################################################*/
 
 std::vector<std::string> PlaylistComponent::tokenise(std::string csvLine, char separator)
 {
@@ -353,18 +434,19 @@ std::vector<std::string> PlaylistComponent::tokenise(std::string csvLine, char s
 
     return tokens;
 }
-/*##################################################################################################*/
 
+double PlaylistComponent::getTracklength(File audioFile)
+{
+    double trackLen = 0.0;
+    
 
+    if (auto reader = playlistCompFormatManager.createReaderFor(audioFile))
+    {
+        auto lengthInSeconds = reader->lengthInSamples / reader->sampleRate;
+        // lengthInSeconds now contains the length of the audio file in seconds...
 
+        trackLen = lengthInSeconds;
+    }
 
-
-
-/*
-    issues:
-    1. Cannot open playlist.csv because of relative path
-    2. absolute path contains "/" which breaks the path by escaping the next letter
-
-    FIXED by taking out the header first
-
-*/
+    return trackLen;
+};
