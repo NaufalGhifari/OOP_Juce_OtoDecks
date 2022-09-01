@@ -35,19 +35,17 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
     // source: https://www.youtube.com/watch?v=po46y8UKPOY
     volSlider.setSliderStyle(Slider::SliderStyle::Rotary);
     volSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
+    volSlider.setColour(juce::Slider::rotarySliderOutlineColourId, Colours::darkred);
+    volSlider.setColour(juce::Slider::rotarySliderFillColourId, Colours::orangered);
+    volSlider.setColour(juce::Slider::thumbColourId, juce::Colours::antiquewhite);
 
     speedSlider.setSliderStyle(Slider::SliderStyle::Rotary);
     speedSlider.setTextBoxStyle(Slider::TextBoxBelow, true, 100, 25);
+    speedSlider.setColour(juce::Slider::rotarySliderOutlineColourId, Colours::darkred);
+    speedSlider.setColour(juce::Slider::rotarySliderFillColourId, Colours::orangered);
+    speedSlider.setColour(juce::Slider::thumbColourId, juce::Colours::antiquewhite);
 
-
-    // add labels for slider
-    //addAndMakeVisible(volLabel);
-    //volLabel.setText("Volume", juce::dontSendNotification);
-    //volLabel.attachToComponent(&volSlider, true);
-
-    //addAndMakeVisible(speedLabel);
-    //speedLabel.setText("Speed", juce::dontSendNotification);
-    //speedLabel.attachToComponent(&speedSlider, true);
+    posSlider.setColour(juce::Slider::thumbColourId, juce::Colours::antiquewhite);
 
     addAndMakeVisible(posLabel);
     posLabel.setText("Playback", juce::dontSendNotification);
@@ -55,11 +53,23 @@ DeckGUI::DeckGUI(DJAudioPlayer* _player,
 
     addAndMakeVisible(waveformDisplay);
 
+    addAndMakeVisible(volLabel);
+    volLabel.setText("Volume", juce::dontSendNotification);
+
+    addAndMakeVisible(speedLabel);
+    speedLabel.setText("Speed", juce::dontSendNotification);
+
     // ### Add listeners to react to clicks ###
 
     playButton.addListener(this);
     stopButton.addListener(this);
     loadButton.addListener(this);
+
+    // set colours for textbuttons
+    playButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
+    stopButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
+    loadButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
+    
     
     volSlider.addListener(this);
     speedSlider.addListener(this);
@@ -92,23 +102,26 @@ void DeckGUI::resized()
     // This method is where you should set the bounds of any child
     // components that your component contains..
 
-    double rowH = getHeight() / 14;
+    double rowH = getHeight() / 16;
+    double width = getWidth() / 20;
     auto margin = 50; // margin to make space between left and right edges
 
     // (step 3)
-    waveformDisplay.setBounds(0, 0, getWidth(), rowH*2);
-    posSlider.setBounds(margin, rowH * 2, getWidth() - margin, rowH*2);
+    waveformDisplay.setBounds(0, 0, getWidth(), rowH*4);
+    posSlider.setBounds(margin, rowH * 4, getWidth() - margin, rowH*2);
 
-    playButton.setBounds(0, rowH*4, getWidth(), rowH);
-    stopButton.setBounds(0, rowH*5, getWidth(), rowH);
+    playButton.setBounds(getWidth()/10*1, rowH * 6, getWidth() / 3, rowH * 2);
+    stopButton.setBounds(getWidth()/10*6, rowH * 6, getWidth() / 3, rowH * 2);
     
-
     //sliders position
-    volSlider.setBounds(margin, rowH * 6.5, getWidth()/2, rowH*5);
-    speedSlider.setBounds(getWidth() / 2, rowH * 6.5, getWidth() / 2, rowH * 5);
+    volLabel.setBounds(width*5.8, rowH * 8.5, width*3, rowH);
+    speedLabel.setBounds(width*14, rowH * 8.5, getWidth() / 2, rowH);
+
+    volSlider.setBounds(margin, rowH * 9, getWidth()/2, rowH*5);
+    speedSlider.setBounds(getWidth() / 2, rowH * 9, getWidth() / 2, rowH * 5);
     
 
-    loadButton.setBounds(0, rowH * 13, getWidth(), rowH);
+    loadButton.setBounds(getWidth()/3, rowH * 15, getWidth() / 3, rowH * 1.5);
 
     /*
     waveformDisplay.setBounds(0, rowH * 8, getWidth(), rowH * 2);

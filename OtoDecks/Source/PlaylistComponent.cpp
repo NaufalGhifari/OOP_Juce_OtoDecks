@@ -38,21 +38,12 @@ PlaylistComponent::PlaylistComponent(DeckGUI* _deck_1,
     // display and add listener for addNewFileButton
     addAndMakeVisible(addNewFileButton);
     addNewFileButton.addListener(this);
+    addNewFileButton.setColour(juce::TextButton::buttonColourId, juce::Colours::darkred);
 
     playlistCompFormatManager.registerBasicFormats();
 
-    //#################
-    addAndMakeVisible(searchButton);
-    searchButton.addListener(this);
-    searchButton.setName("search");
-
-    addAndMakeVisible(reloadButton);
-    reloadButton.addListener(this);
-    reloadButton.setName("reload");
-
     addAndMakeVisible(searchLabel);
     searchLabel.setText("Search tracks: ", juce::dontSendNotification);
-    //searchLabel.attachToComponent(&inputText, true);
     searchLabel.setColour(juce::Label::textColourId, juce::Colours::white);
     searchLabel.setJustificationType(juce::Justification::centred);
 
@@ -61,30 +52,37 @@ PlaylistComponent::PlaylistComponent(DeckGUI* _deck_1,
     inputText.setColour(juce::Label::backgroundColourId, juce::Colours::darkgrey);
     inputText.onTextChange = [this]
     { 
-        // <!> update displayedFileVector here
-        /*
-            WIP ACTUAL
-            matching algo works, but repainting the cell is an issue because of the vector index
-        */
-
         String currentText = inputText.getText();
         DBG("Text changed: " << currentText);
 
-        displayedFileVector.clear();
-
-        for(int i=0; i < fileVector.size(); ++i)
+        if (currentText == "")
         {
-            DBG("Comparing: " << currentText << " to " << fileVector[i].getFileName());
+            displayedFileVector = fileVector;
 
-            // if a substring is found, add file to displayedFileVector
-            // source: https://java2blog.com/check-if-string-contains-substring-cpp/
-            if (strstr(fileVector[i].getFileName().toStdString().c_str(), currentText.toStdString().c_str()))
-            {
-                DBG("Match found! " << currentText << " and " << fileVector[i].getFileName());
-                displayedFileVector.push_back(fileVector[i]);
-            }
+            tableComponent.resized();
         }
-        tableComponent.resized();
+        else if (currentText != "")
+        {
+            displayedFileVector.clear();
+
+            for (int i = 0; i < fileVector.size(); ++i)
+            {
+                DBG("Comparing: " << currentText << " to " << fileVector[i].getFileName());
+
+                // if a substring is found, add file to displayedFileVector
+                // source: https://java2blog.com/check-if-string-contains-substring-cpp/
+                std::string lowercaseFile = fileVector[i].getFileName().toStdString();
+                std::string lowercaseSearch = currentText.toStdString();
+
+                if (strstr(lowercaseFile.c_str(), lowercaseSearch.c_str()))
+                {
+                    DBG("Match found! " << currentText << " and " << fileVector[i].getFileName());
+                    displayedFileVector.push_back(fileVector[i]);
+                }
+            }
+            tableComponent.resized();
+        }
+        
     };
     //#################
 }
@@ -94,8 +92,6 @@ PlaylistComponent::~PlaylistComponent()
     tableComponent.setModel(nullptr);
 
     // save playlist to a file
-     
-    // <!> uncomment to save the file upon closing
     saveToFile(fileVector, "playlist.csv");
 }
 
@@ -108,9 +104,9 @@ void PlaylistComponent::paint (juce::Graphics& g)
        drawing code..
     */
 
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
-
-    g.setColour (juce::Colours::grey);
+    //g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
+    g.fillAll(juce::Colours::darkred);
+    g.setColour (juce::Colours::white);
     g.drawRect (getLocalBounds(), 1);   // draw an outline around the component
 
     g.setColour (juce::Colours::white);
@@ -128,10 +124,7 @@ void PlaylistComponent::resized()
     double width = getWidth()/10;
 
     searchLabel.setBounds(0, 0, width * 2, height);
-    inputText.setBounds(width*2, 0, getWidth()-width*4, height);
-    
-    searchButton.setBounds(width*8, 0, width, height);
-    reloadButton.setBounds(width * 9, 0, width, height);
+    inputText.setBounds(width*2, 0, getWidth()-width*4, height*0.99);
 
     tableComponent.setBounds(0, height, getWidth(), getHeight());
 
@@ -142,7 +135,7 @@ void PlaylistComponent::resized()
 int PlaylistComponent::getNumRows()
 {
     //return trackTitles.size();
-    return fileVector.size();
+    return displayedFileVector.size();
 };
 
 // 4 functions inherited from TableListBoxModel
@@ -155,11 +148,12 @@ void PlaylistComponent::paintRowBackground(Graphics& g,
     // if the row is selected paint it orange, else paint it grey
     if (rowIsSelected)
     {
-        g.fillAll(Colours::orange);
+        g.fillAll(Colours::darkred);
     }
     else 
     {
-        g.fillAll(Colours::darkgrey);
+        g.fillAll(Colours::black);
+        g.setColour(Colours::white);
     }
 };
 
@@ -176,6 +170,10 @@ void PlaylistComponent::paintCell(Graphics& g,
     if (rowNumber < getNumRows())
     {   
         
+
+        /*
+            <!> ISSUE: each row is printing all the names at the same time.
+        */
         if (displayedFileVector.size() > 0)
         {
             if (columnId == 1)
@@ -185,17 +183,19 @@ void PlaylistComponent::paintCell(Graphics& g,
                     width - 4, height,
                     Justification::centredLeft,
                     true);
+                
             }
             else if (columnId == 2)
             {
-                double TL_double = getTracklength(displayedFileVector[rowNumber]);                
+                double TL_double = getTracklength(displayedFileVector[rowNumber]);
                 std::string TL_string = std::to_string(TL_double) + " s";
-                
+
                 g.drawText(TL_string,
                     2, 0,
                     width - 4, height,
                     Justification::centredLeft,
                     true);
+                
             }
         }
         else 
@@ -207,13 +207,6 @@ void PlaylistComponent::paintCell(Graphics& g,
             
             
         }
-    }
-    else 
-    {
-        g.drawText("no tracks found", 2, 0,
-            width - 4, height,
-            Justification::centredLeft,
-            true);
     }
 };
 
@@ -306,25 +299,7 @@ void PlaylistComponent::buttonClicked(Button* button)
                     tableComponent.resized();
                 });
         }
-        else if (button == &searchButton)
-        {
-            DBG("PlaylistComponent::buttonClicked : search button clicked");
-
-            displayedFileVector.clear();
-            resized();
-
-        }
-        else if (button == &reloadButton)
-        {
-            DBG("PlaylistComponent::buttonClicked : reload button clicked");
-
-            displayedFileVector.clear();
-            fileVector.clear();
-
-            loadPlaylistFromFile("playlist.csv");
-
-            resized();
-        }
+        
     }
     else // button has an id
     { 

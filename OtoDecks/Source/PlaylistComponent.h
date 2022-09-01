@@ -104,9 +104,6 @@ private:
     //################
     Label searchLabel;
     Label inputText;
-
-    TextButton searchButton{"Search"};
-    TextButton reloadButton{"Reload"};
     
     //################
 
