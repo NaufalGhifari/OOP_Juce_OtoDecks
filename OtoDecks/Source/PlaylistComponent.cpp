@@ -42,6 +42,7 @@ PlaylistComponent::PlaylistComponent(DeckGUI* _deck_1,
 
     playlistCompFormatManager.registerBasicFormats();
 
+    // labels
     addAndMakeVisible(searchLabel);
     searchLabel.setText("Search tracks: ", juce::dontSendNotification);
     searchLabel.setColour(juce::Label::textColourId, juce::Colours::white);
@@ -84,15 +85,17 @@ PlaylistComponent::PlaylistComponent(DeckGUI* _deck_1,
         }
         
     };
+
     //#################
 }
 
 PlaylistComponent::~PlaylistComponent()
 {
-    tableComponent.setModel(nullptr);
-
     // save playlist to a file
     saveToFile(fileVector, "playlist.csv");
+
+    // clean up
+    tableComponent.setModel(nullptr);
 }
 
 void PlaylistComponent::paint (juce::Graphics& g)
@@ -129,7 +132,7 @@ void PlaylistComponent::resized()
     tableComponent.setBounds(0, height, getWidth(), getHeight());
 
     // position load new file button
-    addNewFileButton.setBounds(0, height *9, getWidth(), height);
+    addNewFileButton.setBounds(0, height *8.75, getWidth(), height);
 }
 
 int PlaylistComponent::getNumRows()
@@ -169,11 +172,6 @@ void PlaylistComponent::paintCell(Graphics& g,
     /* fix for crash on fullscreen. Source: https://world-class.github.io/REPL/kinks/level-5/cm-2005-object-oriented-programming/ */
     if (rowNumber < getNumRows())
     {   
-        
-
-        /*
-            <!> ISSUE: each row is printing all the names at the same time.
-        */
         if (displayedFileVector.size() > 0)
         {
             if (columnId == 1)
@@ -197,15 +195,6 @@ void PlaylistComponent::paintCell(Graphics& g,
                     true);
                 
             }
-        }
-        else 
-        {
-            g.drawText("no tracks found", 2, 0,
-                width - 4, height,
-                Justification::centredLeft,
-                true);
-            
-            
         }
     }
 };
@@ -277,8 +266,6 @@ void PlaylistComponent::buttonClicked(Button* button)
             fChooser.launchAsync(fileChooserFlags, [this](const FileChooser& chooser)
                 {
                     File chosenFile = chooser.getResult();
-                    
-                    // <!> check if file is ok
 
                     // add the selected file(s) to fileVector
                     fileVector.push_back(chosenFile);
@@ -311,7 +298,30 @@ void PlaylistComponent::buttonClicked(Button* button)
         {
             DBG(btn_name << " clicked");
 
-            // <!> remove track
+            // create a temporary vector
+            std::vector<juce::File> tempFileVector;
+
+            // copy file vector and clear it
+            tempFileVector = fileVector;
+            DBG("tempFileVector size: " << tempFileVector.size());
+            fileVector.clear();
+
+            // copy all but the deleted file into file vector
+            int i = 0;
+            for (i; i < tempFileVector.size(); ++i)
+            {
+                if (i != id_int)
+                {
+                    fileVector.push_back(tempFileVector[i]);
+                }
+            }
+
+            // copy to display the files
+            displayedFileVector.clear();
+            displayedFileVector = fileVector;
+
+            // refresh the playlist
+            tableComponent.resized();
 
             return;
         }       
@@ -410,6 +420,9 @@ std::vector<std::string> PlaylistComponent::tokenise(std::string csvLine, char s
     return tokens;
 }
 
+/*
+    Inspired by: https://forum.juce.com/t/get-track-length-before-it-starts-playing/44838/2
+*/
 double PlaylistComponent::getTracklength(File audioFile)
 {
     double trackLen = 0.0;
@@ -418,8 +431,6 @@ double PlaylistComponent::getTracklength(File audioFile)
     if (auto reader = playlistCompFormatManager.createReaderFor(audioFile))
     {
         auto lengthInSeconds = reader->lengthInSamples / reader->sampleRate;
-        // lengthInSeconds now contains the length of the audio file in seconds...
-
         trackLen = lengthInSeconds;
     }
 

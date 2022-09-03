@@ -67,6 +67,7 @@ private:
     Label volLabel;
     Label speedLabel;
     Label posLabel;
+    Label playbackLabel;
 
     WaveformDisplay waveformDisplay;
 

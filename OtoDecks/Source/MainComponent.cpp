@@ -36,6 +36,7 @@ MainComponent::~MainComponent()
     shutdownAudio();
 }
 
+
 //==============================================================================
 void MainComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
 {
@@ -69,18 +70,15 @@ void MainComponent::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    // You can add your drawing code here!
-    
 }
 
 void MainComponent::resized()
 {
 
-    deckGUI1.setBounds(0, 0, getWidth() / 2, getHeight() / 2);
-    deckGUI2.setBounds(getWidth() / 2, 0, getWidth() / 2, getHeight() / 2);
+    deckGUI1.setBounds(0, 0, getWidth() / 2, getHeight() / 1.5);
+    deckGUI2.setBounds(getWidth() / 2, 0, getWidth() / 2, getHeight() / 1.5);
 
-    playlistComponent.setBounds(0, getHeight() / 2, getWidth(), getHeight() / 2);
+    playlistComponent.setBounds(0, getHeight() / 1.5, getWidth(), getHeight() / 3);
 
 };
 

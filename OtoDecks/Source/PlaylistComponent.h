@@ -16,7 +16,6 @@
 #include <iostream>
 #include <JuceHeader.h>
 
-// <!> still in testing
 #include "DeckGUI.h"
 #include "DJAudioPlayer.h"
 #include "WaveformDisplay.h"
